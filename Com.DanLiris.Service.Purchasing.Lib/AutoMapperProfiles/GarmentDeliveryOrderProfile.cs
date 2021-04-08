@@ -50,6 +50,9 @@ namespace Com.DanLiris.Service.Purchasing.Lib.AutoMapperProfiles
                 .ForPath(d => d.incomeTax.Name, opt => opt.MapFrom(s => s.IncomeTaxName))
                 .ForPath(d => d.incomeTax.Rate, opt => opt.MapFrom(s => s.IncomeTaxRate))
 
+                .ForPath(d=> d.isPayIncomeTax,opt=> opt.MapFrom(s=> s.IsPayIncomeTax))
+                .ForPath(d => d.isPayVAT, opt => opt.MapFrom(s => s.IsPayVAT))
+
                 .ForMember(d => d.items, opt => opt.MapFrom(s => s.Items))
                 
                 .ReverseMap();

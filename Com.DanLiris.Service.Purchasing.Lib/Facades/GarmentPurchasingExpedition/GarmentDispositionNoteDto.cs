@@ -5,7 +5,7 @@ namespace Com.DanLiris.Service.Purchasing.Lib.Facades.GarmentPurchasingExpeditio
 {
     public class GarmentDispositionNoteDto
     {
-        public GarmentDispositionNoteDto(int id, string documentNo, DateTimeOffset date, DateTimeOffset dueDate, int supplierId, string supplierCode, string supplierName, double vATAmount, double currencyVATAmount, double incomeTaxAmount, double currencyIncomeTaxAmount, double totalPaid, double currencyTotalPaid, int currencyId, string currencyCode, double currencyRate, double dPPAmount, double currencyDPPAmount, List<GarmentDispositionNoteItemDto> items, string proformaNo)
+        public GarmentDispositionNoteDto(int id, string documentNo, DateTimeOffset date, DateTimeOffset dueDate, int supplierId, string supplierCode, string supplierName, double vATAmount, double currencyVATAmount, double incomeTaxAmount, double currencyIncomeTaxAmount, double totalPaid, double currencyTotalPaid, int currencyId, string currencyCode, double currencyRate, double dPPAmount, double currencyDPPAmount, List<GarmentDispositionNoteItemDto> items, string proformaNo,string category)
         {
             Id = id;
             DocumentNo = documentNo;
@@ -27,6 +27,7 @@ namespace Com.DanLiris.Service.Purchasing.Lib.Facades.GarmentPurchasingExpeditio
             CurrencyDPPAmount = currencyDPPAmount;
             Items = items;
             ProformaNo = proformaNo;
+            Category = category;
         }
 
         public int Id { get; private set; }
@@ -48,6 +49,7 @@ namespace Com.DanLiris.Service.Purchasing.Lib.Facades.GarmentPurchasingExpeditio
         public double DPPAmount { get; private set; }
         public double CurrencyDPPAmount { get; private set; }
         public string ProformaNo { get; private set; }
+        public string Category { get; set; }
         public List<GarmentDispositionNoteItemDto> Items { get; private set; }
     }
 }

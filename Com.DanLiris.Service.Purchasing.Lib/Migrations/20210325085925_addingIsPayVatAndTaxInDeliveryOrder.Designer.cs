@@ -13,9 +13,10 @@ using System;
 namespace Com.DanLiris.Service.Purchasing.Lib.Migrations
 {
     [DbContext(typeof(PurchasingDbContext))]
-    partial class PurchasingDbContextModelSnapshot : ModelSnapshot
+    [Migration("20210325085925_addingIsPayVatAndTaxInDeliveryOrder")]
+    partial class addingIsPayVatAndTaxInDeliveryOrder
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -2048,8 +2049,6 @@ namespace Com.DanLiris.Service.Purchasing.Lib.Migrations
                     b.Property<string>("InvoiceProformaNo");
 
                     b.Property<bool>("IsDeleted");
-
-                    b.Property<bool>("IsPaymentPaid");
 
                     b.Property<string>("LastModifiedAgent")
                         .IsRequired()

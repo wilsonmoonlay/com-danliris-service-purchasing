@@ -6,35 +6,32 @@ namespace Com.DanLiris.Service.Purchasing.Lib.ViewModels.GarmentInternNoteViewMo
 {
     public class InvoiceDto
     {
-        public InvoiceDto(GarmentInvoiceInternNoteViewModel internalNoteInvoice)
+        public InvoiceDto(string invoiceNo, DateTimeOffset invoiceDate, string productNames, int categoryId, string categoryName, string paymentMethod, int invoiceId, string deliveryOrdersNo, string billsNo, string paymentBills, double amount, bool useVAT, bool isPayVAT, bool useIncomeTax, bool isPayTax, double incomeTaxRate)
         {
-            DocumentNo = internalNoteInvoice.GarmentInvoices.InvoiceNo;
-            Date = internalNoteInvoice.GarmentInvoices.InvoiceDate;
-            ProductNames = string.Join("\n", internalNoteInvoice.GarmentInvoices.Items.SelectMany(item => item.Details).Select(detail => detail.ProductName));
-            Category = internalNoteInvoice.Category;
-            PaymentMethod = internalNoteInvoice.PaymentMethod;
-            Id = (int)internalNoteInvoice.GarmentInvoices.Id;
-            DeliveryOrdersNo = internalNoteInvoice.DeliveryOrdersNo;
-            BillsNo = internalNoteInvoice.BillsNo;
-            PaymentBills = internalNoteInvoice.PaymentBills;
+            DocumentNo = invoiceNo;
+            Date = invoiceDate;
+            ProductNames = productNames;
+            Category = new CategoryDto(categoryId, categoryName);
+            PaymentMethod = paymentMethod;
+            Id = invoiceId;
+            DeliveryOrdersNo = deliveryOrdersNo;
+            BillsNo = billsNo;
+            PaymentBills = paymentBills;
 
-            Amount = internalNoteInvoice.GarmentInvoices.TotalAmount;
+            UseVAT = useVAT;
+            IsPayVAT = isPayVAT;
+            UseIncomeTax = useIncomeTax;
+            IsPayTax = isPayTax;
+            IncomeTaxRate = incomeTaxRate;
+            TotalAmount = amount;
 
-            if (internalNoteInvoice.GarmentInvoices.UseVat && internalNoteInvoice.GarmentInvoices.IsPayVat)
-                Amount += internalNoteInvoice.GarmentInvoices.TotalAmount * 0.1;
+            Amount = amount;
 
-            if (internalNoteInvoice.GarmentInvoices.UseIncomeTax && internalNoteInvoice.GarmentInvoices.IsPayTax)
-                Amount -= internalNoteInvoice.GarmentInvoices.TotalAmount * (internalNoteInvoice.GarmentInvoices.IncomeTaxRate / 100);
-        }
+            if (useVAT && isPayVAT)
+                Amount += amount * 0.1;
 
-        public InvoiceDto(GarmentInvoice internalNoteInvoice)
-        {
-            DocumentNo = internalNoteInvoice.InvoiceNo;
-            Date = internalNoteInvoice.InvoiceDate;
-            ProductNames = string.Join("\n", internalNoteInvoice.Items.SelectMany(item => item.Details).Select(detail => detail.ProductName));
-            Category = new CategoryDto();
-            Amount = internalNoteInvoice.TotalAmount;
-            Id = (int)internalNoteInvoice.Id;
+            if (useIncomeTax && isPayTax)
+                Amount -= amount * (incomeTaxRate / 100);
         }
 
         public string DocumentNo { get; set; }
@@ -47,5 +44,11 @@ namespace Com.DanLiris.Service.Purchasing.Lib.ViewModels.GarmentInternNoteViewMo
         public string DeliveryOrdersNo { get; set; }
         public string BillsNo { get; private set; }
         public string PaymentBills { get; private set; }
+        public bool UseVAT { get; private set; }
+        public bool IsPayVAT { get; private set; }
+        public bool UseIncomeTax { get; private set; }
+        public bool IsPayTax { get; private set; }
+        public double IncomeTaxRate { get; private set; }
+        public double TotalAmount { get; private set; }
     }
 }

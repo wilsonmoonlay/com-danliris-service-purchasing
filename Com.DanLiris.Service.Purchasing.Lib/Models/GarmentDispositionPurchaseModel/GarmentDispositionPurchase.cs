@@ -32,6 +32,7 @@ namespace Com.DanLiris.Service.Purchasing.Lib.Models.GarmentDispositionPurchaseM
         public DateTimeOffset VerifiedDateSend { get; set; }
         public virtual List<GarmentDispositionPurchaseItem> GarmentDispositionPurchaseItems { get; set; }
         public PurchasingGarmentExpeditionPosition Position { get; set; }
+        public bool IsPaymentPaid { get; set; }
 
         /// <summary>
         /// only use for update GarmentDisposiion

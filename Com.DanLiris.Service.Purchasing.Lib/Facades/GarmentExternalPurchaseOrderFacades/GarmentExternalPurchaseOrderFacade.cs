@@ -665,6 +665,8 @@ namespace Com.DanLiris.Service.Purchasing.Lib.Facades.GarmentExternalPurchaseOrd
                     IsClosed = s.IsClosed,
                     CreatedBy = s.CreatedBy,
                     LastModifiedUtc = s.LastModifiedUtc,
+                    IsPayVAT = s.IsPayVAT,
+                    IsPayIncomeTax = s.IsPayIncomeTax,
                     Items = s.Items.Select(i => new GarmentExternalPurchaseOrderItem
                     {
                         Id = i.Id,

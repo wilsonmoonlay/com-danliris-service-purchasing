@@ -391,6 +391,8 @@ namespace Com.DanLiris.Service.Purchasing.WebApi.Controllers.v1.GarmentExternalP
                         s.IsCanceled,
                         s.IsClosed,
                         s.LastModifiedUtc,
+                        s.IsPayVAT,
+                        s.IsPayIncomeTax,
                         Items = s.Items.Select(i => new
                         {
                             i.Id,

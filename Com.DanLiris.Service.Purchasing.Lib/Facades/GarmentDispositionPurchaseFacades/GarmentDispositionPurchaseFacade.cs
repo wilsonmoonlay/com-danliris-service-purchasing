@@ -577,5 +577,15 @@ namespace Com.DanLiris.Service.Purchasing.Lib.Facades.GarmentDispositionPurchase
 
             return viewModel;
         }
+
+        public Task<int> SetIsPaidTrue(string dispositionNo, string user)
+        {
+            var model = dbContext.GarmentDispositionPurchases.FirstOrDefault(entity => entity.DispositionNo == dispositionNo);
+            model.IsPaymentPaid = true;
+            EntityExtension.FlagForUpdate(model, user, "Facade");
+            dbContext.GarmentDispositionPurchases.Update(model);
+            return dbContext.SaveChangesAsync();
+
+        }
     }
 }
