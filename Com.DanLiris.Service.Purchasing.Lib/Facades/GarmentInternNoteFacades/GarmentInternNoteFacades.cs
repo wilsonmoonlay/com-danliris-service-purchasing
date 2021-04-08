@@ -508,12 +508,12 @@ namespace Com.DanLiris.Service.Purchasing.Lib.Facades.GarmentInternNoteFacades
 
         }
 
-        public List<GarmentInternalNoteDto> BankExpenditureReadInternalNotes(int currencyId, int supplierId)
+        public List<GarmentInternalNoteDto> BankExpenditureReadInternalNotes(string currencyCode, int supplierId)
         {
             var query = dbContext.GarmentInternNotes.Where(entity => entity.Position == PurchasingGarmentExpeditionPosition.AccountingAccepted || entity.Position == PurchasingGarmentExpeditionPosition.CashierAccepted);
 
-            if (currencyId > 0)
-                query = query.Where(entity => entity.CurrencyId.GetValueOrDefault() == currencyId);
+            if (!string.IsNullOrEmpty(currencyCode))
+                query = query.Where(entity => entity.CurrencyCode.Contains(currencyCode));
 
             if (supplierId > 0)
                 query = query.Where(entity => entity.SupplierId.GetValueOrDefault() == supplierId);

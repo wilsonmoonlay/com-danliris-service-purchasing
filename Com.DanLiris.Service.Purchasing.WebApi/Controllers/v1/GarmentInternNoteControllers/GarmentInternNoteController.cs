@@ -74,11 +74,11 @@ namespace Com.DanLiris.Service.Purchasing.WebApi.Controllers.v1.GarmentInternNot
         }
 
         [HttpGet("dpp-vat-bank-expenditures")]
-        public IActionResult GetDPPVATBankExpenditures([FromQuery] int currencyId, [FromQuery] int supplierId)
+        public IActionResult GetDPPVATBankExpenditures([FromQuery] string currencyCode, [FromQuery] int supplierId)
         {
             try
             {
-                var result = facade.BankExpenditureReadInternalNotes(currencyId, supplierId);
+                var result = facade.BankExpenditureReadInternalNotes(currencyCode, supplierId);
 
                 Dictionary<string, object> Result =
                     new ResultFormatter(ApiVersion, General.OK_STATUS_CODE, General.OK_MESSAGE)
