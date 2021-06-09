@@ -22,4 +22,10 @@
     <ProjectReference Include="..\Com.DanLiris.Service.Purchasing.Lib\Com.DanLiris.Service.Purchasing.Lib.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Content Update="appsettings - Copy.Development.json">
+      <DependentUpon>appsettings.Development.json</DependentUpon>
+    </Content>
+  </ItemGroup>
+
 </Project>

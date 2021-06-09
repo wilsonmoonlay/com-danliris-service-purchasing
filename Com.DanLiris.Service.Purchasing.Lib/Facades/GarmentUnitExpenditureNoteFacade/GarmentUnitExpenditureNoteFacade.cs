@@ -18,6 +18,7 @@ using Com.DanLiris.Service.Purchasing.Lib.Services;
 using Com.DanLiris.Service.Purchasing.Lib.Utilities;
 using Com.DanLiris.Service.Purchasing.Lib.ViewModels.GarmentUnitExpenditureNoteViewModel;
 using Com.DanLiris.Service.Purchasing.Lib.ViewModels.IntegrationViewModel;
+using Com.DanLiris.Service.Purchasing.Lib.ViewModels.NewIntegrationViewModel;
 using Com.Moonlay.Models;
 using Com.Moonlay.NetCore.Lib;
 using Microsoft.AspNetCore.JsonPatch;
@@ -478,7 +479,7 @@ namespace Com.DanLiris.Service.Purchasing.Lib.Facades.GarmentUnitExpenditureNote
                                 PRId = garmentPurchaseRequestItem.GarmentPRId,
                                 PRNo = garmentPurchaseRequest.PRNo,
                                 PRItemId = item.PRItemId,
-                                POId = garmentInternalPurchaseOrderItem.GPOId,
+                                POId = garmentInternalPurchaseOrderItem == null ? 0 : garmentInternalPurchaseOrderItem.GPOId,
                                 POItemId = item.POItemId,
                                 POSerialNumber = item.POSerialNumber,
                                 ProductId = item.ProductId,
@@ -634,8 +635,10 @@ namespace Com.DanLiris.Service.Purchasing.Lib.Facades.GarmentUnitExpenditureNote
                         List<GarmentUnitExpenditureNoteItem> garmentUENItems = new List<GarmentUnitExpenditureNoteItem>();
                         foreach(var unitDOItem in garmentUnitDO.Items)
                         {
-                            GarmentInternalPurchaseOrderItem gpoItem = dbContext.GarmentInternalPurchaseOrderItems.FirstOrDefault(a => a.Id == unitDOItem.POItemId);
-                            GarmentInternalPurchaseOrder garmentInternalPurchaseOrder = dbContext.GarmentInternalPurchaseOrders.FirstOrDefault(a => a.Id == gpoItem.GPOId);
+                            GarmentPurchaseRequest garmentPurchaseRequest = dbContext.GarmentPurchaseRequests.FirstOrDefault(a => a.RONo == unitDOItem.RONo);
+                            //GarmentInternalPurchaseOrderItem gpoItem = dbContext.GarmentInternalPurchaseOrderItems.FirstOrDefault(a => a.Id == unitDOItem.POItemId);
+                            //GarmentInternalPurchaseOrder garmentInternalPurchaseOrder = dbContext.GarmentInternalPurchaseOrders.FirstOrDefault(a => a.Id == gpoItem.GPOId);
+
                             GarmentUnitReceiptNoteItem gUrnItem = garmentUnitReceiptNote.Items.FirstOrDefault(a => a.Id == unitDOItem.URNItemId);
                             GarmentUnitExpenditureNoteItem gUenItem1 = garmentUnitExpenditureNote.Items.FirstOrDefault(a => a.Id == gUrnItem.UENItemId);
 
@@ -658,8 +661,8 @@ namespace Com.DanLiris.Service.Purchasing.Lib.Facades.GarmentUnitExpenditureNote
                                 UomUnit= unitDOItem.UomUnit,
                                 PricePerDealUnit= unitDOItem.PricePerDealUnit,
                                 FabricType= unitDOItem.FabricType,
-                                BuyerId=long.Parse(garmentInternalPurchaseOrder.BuyerId),
-                                BuyerCode= garmentInternalPurchaseOrder.BuyerCode,
+                                BuyerId=long.Parse(garmentPurchaseRequest.BuyerId),
+                                BuyerCode= garmentPurchaseRequest.BuyerCode,
                                 DOCurrencyRate= unitDOItem.DOCurrencyRate,
                                 BasicPrice= gUenItem1.BasicPrice,
                                 Conversion= gUenItem1.Conversion
@@ -1631,13 +1634,16 @@ namespace Com.DanLiris.Service.Purchasing.Lib.Facades.GarmentUnitExpenditureNote
 
         public IQueryable<MonitoringOutViewModel> GetReportQueryOut(DateTime? dateFrom, DateTime? dateTo, string type, int offset)
         {
+            var categories = GetProductCodes(1, int.MaxValue, "{}", "{}");
+            var coderequirement = new[] { "BP", "BE" };
+            var categories1 = type == "FABRIC" ? categories.Where(x => x.CodeRequirement == "BB").Select(x => x.Name).ToArray() : type == "NON FABRIC" ? categories.Where(x => coderequirement.Contains(x.CodeRequirement)).Select(x => x.Name).ToArray() : categories.Select(x => x.Name).ToArray();
             DateTime DateFrom = dateFrom == null ? new DateTime(1970, 1, 1) : (DateTime)dateFrom;
             DateTime DateTo = dateTo == null ? DateTime.Now : (DateTime)dateTo;
-            var coderequirement = new[] { "BP", "BE" };
             var Data1 = from a in dbContext.GarmentUnitExpenditureNotes
                         join b in dbContext.GarmentUnitExpenditureNoteItems on a.Id equals b.UENId
                         where a.IsDeleted == false && b.IsDeleted == false
-                        && (type == "FABRIC" ? b.ProductName == "FABRIC" : type == "NON FABRIC" ? b.ProductName != "FABRIC" : b.ProductName == b.ProductName)
+                        //&& (type == "FABRIC" ? b.ProductName == "FABRIC" : type == "NON FABRIC" ? b.ProductName != "FABRIC" : b.ProductName == b.ProductName)
+                        && (type == "FABRIC" ? categories1.Contains(b.ProductName) : type == "NON FABRIC" ? categories1.Contains(b.ProductName) : categories1.Contains(b.ProductName))
                         && b.ProductName != "PROCESS"
                         && a.CreatedUtc.Date >= DateFrom.Date
                         && a.CreatedUtc.Date <= DateTo.Date
@@ -1660,7 +1666,8 @@ namespace Com.DanLiris.Service.Purchasing.Lib.Facades.GarmentUnitExpenditureNote
             var Data2 = from a in dbContext.GarmentUnitExpenditureNotes
                         join b in dbContext.GarmentUnitExpenditureNoteItems on a.Id equals b.UENId
                         where a.IsDeleted == false && b.IsDeleted == false
-                        && (type == "FABRIC" ? b.ProductName == "FABRIC" : type == "NON FABRIC" ? b.ProductName != "FABRIC" : b.ProductName == b.ProductName)
+                        //&& (type == "FABRIC" ? b.ProductName == "FABRIC" : type == "NON FABRIC" ? b.ProductName != "FABRIC" : b.ProductName == b.ProductName)
+                        && (type == "FABRIC" ? categories1.Contains(b.ProductName) : type == "NON FABRIC" ? categories1.Contains(b.ProductName) : categories1.Contains(b.ProductName))
                         && b.ProductName != "PROCESS"
                         && a.LastModifiedUtc.Date >= DateFrom.Date
                         && a.LastModifiedUtc.Date <= DateTo.Date
@@ -1791,6 +1798,27 @@ namespace Com.DanLiris.Service.Purchasing.Lib.Facades.GarmentUnitExpenditureNote
             }
 
             return Excel.CreateExcel(new List<(DataTable, string, List<(string, Enum, Enum)>)>() { (result, "Report", mergeCells) }, true);
+        }
+
+        private List<GarmentCategoryViewModel> GetProductCodes(int page, int size, string order, string filter)
+        {
+            //var param = new StringContent(JsonConvert.SerializeObject(codes), Encoding.UTF8, "application/json");
+            IHttpClientService httpClient = (IHttpClientService)this.serviceProvider.GetService(typeof(IHttpClientService));
+            if (httpClient != null)
+            {
+                var garmentSupplierUri = APIEndpoint.Core + $"master/garment-categories";
+                string queryUri = "?page=" + page + "&size=" + size + "&order=" + order + "&filter=" + filter;
+                string uri = garmentSupplierUri + queryUri;
+                var response = httpClient.GetAsync($"{uri}").Result.Content.ReadAsStringAsync();
+                Dictionary<string, object> result = JsonConvert.DeserializeObject<Dictionary<string, object>>(response.Result);
+                List<GarmentCategoryViewModel> viewModel = JsonConvert.DeserializeObject<List<GarmentCategoryViewModel>>(result.GetValueOrDefault("data").ToString());
+                return viewModel;
+            }
+            else
+            {
+                List<GarmentCategoryViewModel> viewModel = null;
+                return viewModel;
+            }
         }
 
         public async Task<int> PatchOne(long id, JsonPatchDocument<GarmentUnitExpenditureNote> jsonPatch)

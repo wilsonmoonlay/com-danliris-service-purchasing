@@ -31,7 +31,7 @@ namespace Com.DanLiris.Service.Purchasing.WebApi.Controllers.v1.Report
             try
             {
                 //var data = await importPurchasingBookReportFacade.GetReport(no, unit, category, dateFrom, dateTo);
-                var data = await importPurchasingBookReportFacade.GetReport(no, accountingUnitId, accountingCategoryId, dateFrom, dateTo, divisionId);
+                var data = await importPurchasingBookReportFacade.GetReportV2(no, accountingUnitId, accountingCategoryId, dateFrom, dateTo, divisionId);
                 //var data = importPurchasingBookReportService.GetReport();
 
                 return Ok(new
@@ -61,7 +61,7 @@ namespace Com.DanLiris.Service.Purchasing.WebApi.Controllers.v1.Report
             {
                 var clientTimeZoneOffset = int.Parse(Request.Headers["x-timezone-offset"].First());
 
-                var data = await importPurchasingBookReportFacade.GetReport(no, accountingUnitId, accountingCategoryId, dateFrom, dateTo, divisionId);
+                var data = await importPurchasingBookReportFacade.GetReportV2(no, accountingUnitId, accountingCategoryId, dateFrom, dateTo, divisionId);
                 //var data = await importPurchasingBookReportFacade.GetReport(no, unit, category, dateFrom, dateTo);
                 //var data = importPurchasingBookReportService.GetReport();
 

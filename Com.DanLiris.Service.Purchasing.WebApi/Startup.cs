@@ -123,6 +123,7 @@ namespace Com.DanLiris.Service.Purchasing.WebApi
                 .AddTransient<IBankExpenditureNoteFacade, BankExpenditureNoteFacade>()
                 .AddTransient<IBankDocumentNumberGenerator, BankDocumentNumberGenerator>()
                 .AddTransient<PurchasingDocumentExpeditionReportFacade>()
+                .AddTransient<IPurchasingDocumentExpeditionFacade, PurchasingDocumentExpeditionFacade>()
                 .AddTransient<IPPHBankExpenditureNoteFacade, PPHBankExpenditureNoteFacade>()
                 .AddTransient<IPPHBankExpenditureNoteReportFacade, PPHBankExpenditureNoteReportFacade>()
                 .AddTransient<IUnitPaymentOrderPaidStatusReportFacade, UnitPaymentOrderPaidStatusReportFacade>()
@@ -193,6 +194,7 @@ namespace Com.DanLiris.Service.Purchasing.WebApi
                 .AddTransient<IGarmentStockReportFacade, GarmentStockReportFacade>()
                 .AddTransient<IGarmenInternNotePaymentStatusFacade, GarmentInternNotePaymentStatusFacade>()
                 .AddTransient<IGarmentReportCMTFacade, GarmentReportCMTFacade>()
+                .AddTransient<IGarmentRealizationCMTReportFacade, GarmentRealizationCMTReportFacade>()
                 .AddTransient<IDebtBookReportFacade, DebtBookReportFacade>()
                 .AddTransient<IBalanceDebtFacade, GarmentSupplierBalanceDebtFacade>()
                 .AddTransient<IDebtCardReportFacade, DebtCardReportFacade>()
@@ -211,7 +213,8 @@ namespace Com.DanLiris.Service.Purchasing.WebApi
                 .AddTransient<IGarmentDispositionPurchaseFacade, GarmentDispositionPurchaseFacade>()
                 .AddTransient<IGarmentDispositionPaymentReportService, GarmentDispositionPaymentReportService>()
                 .AddTransient<IROFeatureFacade, ROFeatureFacade>()
-                .AddTransient<IGarmentBC23ReportFacade, GarmentBC23ReportFacade>();
+                .AddTransient<IGarmentBC23ReportFacade, GarmentBC23ReportFacade>()
+                .AddTransient<IMutationBeacukaiFacade, MutationBeacukaiFacade>();
         }
 
         private void RegisterServices(IServiceCollection services, bool isTest)

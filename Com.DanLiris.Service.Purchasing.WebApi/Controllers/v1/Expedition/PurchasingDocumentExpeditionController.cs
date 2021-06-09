@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.Extensions.DependencyInjection;
 using Com.DanLiris.Service.Purchasing.Lib.Facades.Expedition;
 using Com.DanLiris.Service.Purchasing.Lib.Services;
 using Com.DanLiris.Service.Purchasing.WebApi.Helpers;
@@ -19,44 +20,44 @@ namespace Com.DanLiris.Service.Purchasing.WebApi.Controllers.v1.Expedition
     public class PurchasingDocumentExpeditionController : Controller
     {
         private string ApiVersion = "1.0.0";
-        private readonly PurchasingDocumentExpeditionFacade purchasingDocumentExpeditionFacade;
+        private readonly IPurchasingDocumentExpeditionFacade purchasingDocumentExpeditionFacade;
         private readonly IdentityService identityService;
 
-        public PurchasingDocumentExpeditionController(PurchasingDocumentExpeditionFacade purchasingDocumentExpeditionFacade, IdentityService identityService)
+        public PurchasingDocumentExpeditionController(IPurchasingDocumentExpeditionFacade purchasingDocumentExpeditionFacade, IServiceProvider serviceProvider)
         {
             this.purchasingDocumentExpeditionFacade = purchasingDocumentExpeditionFacade;
-            this.identityService = identityService;
+            identityService = serviceProvider.GetService<IdentityService>();
         }
 
         [HttpGet]
         public ActionResult Get(int page = 1, int size = 25, string order = "{}", string keyword = null, string filter = "{}")
         {
-            return new BaseGet<PurchasingDocumentExpeditionFacade>(purchasingDocumentExpeditionFacade)
+            return new BaseGet<IPurchasingDocumentExpeditionFacade>(purchasingDocumentExpeditionFacade)
                 .Get(page, size, order, keyword, filter);
         }
 
         [HttpDelete("{Id}")]
         public async Task<IActionResult> Delete([FromRoute] int id)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
+            //if (!ModelState.IsValid)
+            //{
+            //    return BadRequest(ModelState);
+            //}
 
             this.identityService.Username = User.Claims.Single(p => p.Type.Equals("username")).Value;
             this.identityService.Token = Request.Headers["Authorization"].First().Replace("Bearer ", "");
 
-            return await new BaseDelete<PurchasingDocumentExpeditionFacade>(purchasingDocumentExpeditionFacade, ApiVersion)
+            return await new BaseDelete<IPurchasingDocumentExpeditionFacade>(purchasingDocumentExpeditionFacade, ApiVersion)
                 .Delete(id);
         }
 
         [HttpDelete("PDE/{UnitPaymentOrderNo}")]
         public async Task<IActionResult> Delete([FromRoute] string unitPaymentOrderNo)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
+            //if (!ModelState.IsValid)
+            //{
+            //    return BadRequest(ModelState);
+            //}
 
             this.identityService.Username = User.Claims.Single(p => p.Type.Equals("username")).Value;
             this.identityService.Token = Request.Headers["Authorization"].First().Replace("Bearer ", "");
@@ -78,28 +79,30 @@ namespace Com.DanLiris.Service.Purchasing.WebApi.Controllers.v1.Expedition
         [HttpGet("{Id}")]
         public async Task<IActionResult> GetById([FromRoute] int Id)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
+            //if (!ModelState.IsValid)
+            //{
+            //    return BadRequest(ModelState);
+            //}
 
-            var model =  await purchasingDocumentExpeditionFacade.ReadModelById(Id);
             
-            if (model == null)
-            {
-                Dictionary<string, object> Result =
-                    new ResultFormatter(ApiVersion, General.NOT_FOUND_STATUS_CODE, General.NOT_FOUND_MESSAGE)
-                    .Fail();
-                return NotFound(Result);
-            }
-
-            foreach(PurchasingDocumentExpeditionItem item in model.Items)
-            {
-                item.PurchasingDocumentExpedition = null;
-            }
 
             try
             {
+                var model = await purchasingDocumentExpeditionFacade.ReadModelById(Id);
+
+                if (model == null)
+                {
+                    Dictionary<string, object> Result =
+                        new ResultFormatter(ApiVersion, General.NOT_FOUND_STATUS_CODE, General.NOT_FOUND_MESSAGE)
+                        .Fail();
+                    return NotFound(Result);
+                }
+
+                foreach (PurchasingDocumentExpeditionItem item in model.Items)
+                {
+                    item.PurchasingDocumentExpedition = null;
+                }
+
                 return Ok(new
                 {
                     apiVersion = ApiVersion,

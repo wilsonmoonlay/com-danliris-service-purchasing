@@ -45,6 +45,7 @@ namespace Com.DanLiris.Service.Purchasing.Lib.Facades.GarmentDispositionPurchase
             {
                 try
                 {
+                    model.FixingVatAndIncomeTax();
                     GarmentDispositionPurchase dataModel = mapper.Map<FormDto, GarmentDispositionPurchase>(model);
                     EntityExtension.FlagForCreate(dataModel, identityService.Username, USER_AGENT);
                     var DispositionNo = await GenerateNo(identityService.TimezoneOffset);
@@ -172,6 +173,14 @@ namespace Com.DanLiris.Service.Purchasing.Lib.Facades.GarmentDispositionPurchase
             }).ToList(); 
 
             var model = mapper.Map<GarmentDispositionPurchase, FormDto>(dataModel);
+            model.FixingVatAndIncomeTaxView();
+            var modelFixing = model.Items.Select(s => { 
+                var epo =ReadByEPOWithDisposition(s.EPOId, model.SupplierId, model.CurrencyId);
+                s.IsPayIncomeTax = epo.IsPayIncomeTax;
+                s.IsPayVat = epo.IsPayVAT;
+                return s;
+                });
+            model.Items = modelFixing.ToList();
             return model;
         }
 
@@ -201,7 +210,10 @@ namespace Com.DanLiris.Service.Purchasing.Lib.Facades.GarmentDispositionPurchase
 
             Query = QueryHelper<GarmentDispositionPurchase>.ConfigureSearch(Query, searchAttributes, keyword);
 
+            
             Dictionary<string, string> FilterDictionary = JsonConvert.DeserializeObject<Dictionary<string, string>>(filter);
+            //override by user
+            FilterDictionary.Add("CreatedBy", identityService.Username);
             Query = QueryHelper<GarmentDispositionPurchase>.ConfigureFilter(Query, FilterDictionary);
 
             Dictionary<string, string> OrderDictionary = JsonConvert.DeserializeObject<Dictionary<string, string>>(order);
@@ -217,6 +229,71 @@ namespace Com.DanLiris.Service.Purchasing.Lib.Facades.GarmentDispositionPurchase
             var indexModel = new DispositionPurchaseIndexDto(model, page, countData);
             return indexModel;
         }
+
+        public DispositionPurchaseReportIndexDto GetReport(int supplierId, string username, DateTimeOffset? dateForm, DateTimeOffset? dateTo, int size, int page)
+        {
+            var dataModel = dbSet
+                .AsNoTracking()
+                    .Include(p => p.GarmentDispositionPurchaseItems)
+                        .ThenInclude(p => p.GarmentDispositionPurchaseDetails)
+                        //.Where(s=> s.Position == PurchasingGarmentExpeditionPosition.Purchasing)
+                        .AsQueryable();
+
+            if (supplierId != 0)
+                dataModel = dataModel.Where(s => s.SupplierId == supplierId);
+
+            if (!string.IsNullOrEmpty(username))
+                dataModel = dataModel.Where(s => s.CreatedBy == username);
+
+            if (dateForm.HasValue)
+                dataModel = dataModel.Where(s => s.CreatedUtc >= dateForm.GetValueOrDefault());
+
+            if (dateTo.HasValue)
+                dataModel = dataModel.Where(s => s.CreatedUtc <= dateTo.GetValueOrDefault());
+
+            var countData = dataModel.Count();
+
+            var dataList = dataModel.ToList();
+
+
+            var Query = dataList.AsQueryable();
+
+            if (page != 0 && size != 0)
+            {
+                Pageable<GarmentDispositionPurchase> pageable = new Pageable<GarmentDispositionPurchase>(Query, page - 1, size);
+                List<GarmentDispositionPurchase> Data = pageable.Data.ToList();
+
+                int TotalData = pageable.TotalCount;
+
+                var model = mapper.Map<List<GarmentDispositionPurchase>, List<DispositionPurchaseReportTableDto>>(Data.ToList());
+
+                var indexModel = new DispositionPurchaseReportIndexDto(model, page, countData);
+                return indexModel;
+            }
+            else
+            {
+                var model = mapper.Map<List<GarmentDispositionPurchase>, List<DispositionPurchaseReportTableDto>>(Query.ToList());
+
+                var indexModel = new DispositionPurchaseReportIndexDto(model, 1, countData);
+                return indexModel;
+            }
+        }
+
+        public async Task<DispositionUserIndexDto> GetListUsers (string keyword)
+        {
+            var dataModel = dbSet.Select(s=> s.CreatedBy).Distinct()
+                        .AsQueryable();
+
+            if (keyword != null)
+                dataModel = dataModel.Where(s => s.Contains(keyword));
+
+            var countData = dataModel.Count();
+
+            var resultList = dataModel.Select(s => new DispositionUserDto { Name = s, Username = s });
+            var result = new DispositionUserIndexDto(resultList.ToList(), 1, resultList.Count());
+            return result;
+        }
+
         public Tuple<List<FormDto>, int, Dictionary<string, string>> Read(PurchasingGarmentExpeditionPosition position, int Page = 1, int Size = 25, string Order = "{}", string Keyword = null, string Filter = "{}", int supplierId=0)
         {
             IQueryable<GarmentDispositionPurchase> Query = this.dbSet;

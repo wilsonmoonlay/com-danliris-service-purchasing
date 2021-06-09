@@ -234,7 +234,15 @@ namespace Com.DanLiris.Service.Purchasing.Lib.PDFTemplates
                     cell.Phrase = new Phrase(element.InvoiceNo, _smallerFont);
                     table.AddCell(cell);
 
-                    cell.Phrase = new Phrase(element.UPONo, _smallerFont);
+                    //cell.Phrase = new Phrase(element.UPONo, _smallerFont);
+                    if(element.DataSourceSort ==1)
+                    {
+                        cell.Phrase = new Phrase(element.UPONo, _smallerFont);
+                    }
+                    else
+                    {
+                        cell.Phrase = new Phrase(element.CorrectionNo, _smallerFont);
+                    }
                     table.AddCell(cell);
 
                     cell.Phrase = new Phrase(element.CategoryCode + " - " + element.CategoryName, _smallerFont);

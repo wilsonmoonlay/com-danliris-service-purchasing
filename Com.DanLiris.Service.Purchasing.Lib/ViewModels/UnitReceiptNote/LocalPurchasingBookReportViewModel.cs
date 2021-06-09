@@ -31,6 +31,8 @@ namespace Com.DanLiris.Service.Purchasing.Lib.ViewModels.UnitReceiptNote
 
     public class PurchasingReport
     {
+        public long URNId { get; set; }
+        public int DataSourceSort { get; set; }
         public DateTimeOffset ReceiptDate { get; set; }
         public string URNNo { get; set; }
         public string ProductName { get; set; }
@@ -64,11 +66,13 @@ namespace Com.DanLiris.Service.Purchasing.Lib.ViewModels.UnitReceiptNote
         public string PIBImportInfo { get; set; }
         public string Remark { get; set; }
         public decimal IncomeTax { get; set; }
-        public string AccountingCategoryName { get; internal set; }
+        public string AccountingCategoryName { get;  set; }
         public string AccountingCategoryCode { get; internal set; }
-        public string AccountingUnitName { get; internal set; }
+        public string AccountingUnitName { get; set; }
         public string AccountingUnitCode { get; internal set; }
         public int AccountingLayoutIndex { get; set; }
         public string IncomeTaxBy { get; set; }
+        public string CorrectionNo { get; set; }
+        public DateTimeOffset CorrectionDate { get; set; }
     }
 }

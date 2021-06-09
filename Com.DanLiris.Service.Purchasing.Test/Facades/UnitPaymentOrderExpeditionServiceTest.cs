@@ -25,6 +25,7 @@ using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using Moq;
 using Newtonsoft.Json;
 using System;
@@ -101,6 +102,13 @@ namespace Com.DanLiris.Service.Purchasing.Test.Facades
             serviceProvider
                 .Setup(x => x.GetService(typeof(IDistributedCache)))
                 .Returns(mockDistributedCache.Object);
+
+            var opts = Options.Create(new MemoryDistributedCacheOptions());
+            var cache = new MemoryDistributedCache(opts);
+
+            serviceProvider
+                .Setup(x => x.GetService(typeof(IDistributedCache)))
+                .Returns(cache);
 
             var mockCurrencyProvider = new Mock<ICurrencyProvider>();
             mockCurrencyProvider

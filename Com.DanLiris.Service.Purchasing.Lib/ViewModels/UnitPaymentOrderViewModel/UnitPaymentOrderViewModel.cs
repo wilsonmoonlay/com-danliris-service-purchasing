@@ -49,10 +49,10 @@ namespace Com.DanLiris.Service.Purchasing.Lib.ViewModels.UnitPaymentOrderViewMod
 
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
         {
-            if (date.Equals(DateTimeOffset.MinValue) || date == null)
-            {
-                yield return new ValidationResult("Date is required", new List<string> { "date" });
-            }
+            //if (date.Equals(DateTimeOffset.MinValue) || date == null)
+            //{
+            //    yield return new ValidationResult("Date is required", new List<string> { "date" });
+            //}
             if (division == null)
             {
                 yield return new ValidationResult("Division is required", new List<string> { "division" });

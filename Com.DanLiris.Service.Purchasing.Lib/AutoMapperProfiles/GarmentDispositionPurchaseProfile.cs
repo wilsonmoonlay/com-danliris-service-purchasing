@@ -3,6 +3,7 @@ using Com.DanLiris.Service.Purchasing.Lib.Utilities;
 using Com.DanLiris.Service.Purchasing.Lib.ViewModels.GarmentDispositionPurchase;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 namespace Com.DanLiris.Service.Purchasing.Lib.AutoMapperProfiles
@@ -69,6 +70,23 @@ namespace Com.DanLiris.Service.Purchasing.Lib.AutoMapperProfiles
             mapEdit.ForMember(s => s.CurrencyCode, opt => opt.MapFrom(d => d.CurrencyName));
                
             mapEdit.ReverseMap();
+
+
+            var mapTableReport = CreateMap<GarmentDispositionPurchase, DispositionPurchaseReportTableDto>();
+            mapTableReport
+                .ForMember(s => s.Category, opt => opt.MapFrom(d => d.Category))
+                .ForMember(s => s.CurrencyCode, opt => opt.MapFrom(d => d.CurrencyName))
+                .ForMember(s => s.DispositionDate, opt => opt.MapFrom(d => new DateTimeOffset(d.CreatedUtc)))
+                .ForMember(s => s.DispositionNo, opt => opt.MapFrom(d => d.DispositionNo))
+                .ForMember(s => s.DueDate, opt => opt.MapFrom(d => d.DueDate))
+                .ForMember(s => s.InvoiceNo, opt => opt.MapFrom(d => d.InvoiceProformaNo))
+                .ForMember(s => s.Nominal, opt => opt.MapFrom(d => d.Amount))
+                .ForMember(s => s.PaymentType, opt => opt.MapFrom(d => d.PaymentType))
+                .ForMember(s => s.StaffName, opt => opt.MapFrom(d => d.CreatedBy))
+                .ForMember(s => s.SupplierCode, opt => opt.MapFrom(d => d.SupplierCode))
+                .ForMember(s => s.SupplierId, opt => opt.MapFrom(d => d.SupplierId))
+                .ForMember(s => s.SupplierName, opt => opt.MapFrom(d => d.SupplierName))
+                .ReverseMap();
         }
     }
 }

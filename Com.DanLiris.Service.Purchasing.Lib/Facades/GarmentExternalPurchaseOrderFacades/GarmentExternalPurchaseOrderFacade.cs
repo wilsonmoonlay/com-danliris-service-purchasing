@@ -1172,5 +1172,148 @@ namespace Com.DanLiris.Service.Purchasing.Lib.Facades.GarmentExternalPurchaseOrd
 
             return Tuple.Create(Data, TotalData, OrderDictionary);
         }
+
+        public Tuple<List<GarmentExternalPurchaseOrder>, int, Dictionary<string, string>> ReadItemByEPONoSimply(string EPONo = null, string Filter = "{}", int supplierId = 0, string currencyCode = null, string paymentType = null, int Page = 1, int Size = 10)
+        {
+            IQueryable<GarmentExternalPurchaseOrder> Query = this.dbSet.Include(s => s.Items).Where(m => m.IsPosted && m.IsClosed == false && m.IsDeleted == false && m.IsCanceled == false && m.IsDispositionPaidCreatedAll == false && m.Items.Any(t => t.IsDispositionCreatedAll == false)); ;
+
+            List<string> searchAttributes = new List<string>()
+            {
+                "EPONo"
+            };
+
+            Query = QueryHelper<GarmentExternalPurchaseOrder>.ConfigureSearch(Query, searchAttributes, EPONo);
+
+            if(!string.IsNullOrEmpty(currencyCode))
+            {
+                Query = Query.Where(s => s.CurrencyCode == currencyCode);
+            }
+
+            if (supplierId > 0)
+                Query = Query.Where(entity => entity.SupplierId == supplierId);
+
+            if (!string.IsNullOrWhiteSpace(paymentType))
+                Query = Query.Where(entity => entity.PaymentType == paymentType);
+
+            Query = Query.Select(s => new GarmentExternalPurchaseOrder
+            {
+                Id = s.Id,
+                UId = s.UId,
+                IsPosted = s.IsPosted,
+                SupplierId = s.SupplierId,
+                SupplierName = s.SupplierName,
+                SupplierCode = s.SupplierCode,
+                Category = s.Category,
+                PaymentType = s.PaymentType,
+                CurrencyId = s.CurrencyId,
+                OrderDate = s.OrderDate,
+                EPONo = s.EPONo,
+                SupplierImport = s.SupplierImport,
+                IsOverBudget = s.IsOverBudget,
+                IsApproved = s.IsApproved,
+                Items = s.Items.Select(a => new GarmentExternalPurchaseOrderItem
+                {
+                    PRNo = a.PRNo,
+                    PRId = a.PRId
+                }).ToList(),
+                CreatedBy = s.CreatedBy,
+                LastModifiedUtc = s.LastModifiedUtc
+            });
+
+
+            Dictionary<string, string> FilterDictionary = JsonConvert.DeserializeObject<Dictionary<string, string>>(Filter);
+            Query = QueryHelper<GarmentExternalPurchaseOrder>.ConfigureFilter(Query, FilterDictionary);
+
+            //Dictionary<string, string> OrderDictionary = JsonConvert.DeserializeObject<Dictionary<string, string>>(Order);
+            //Query = QueryHelper<GarmentExternalPurchaseOrder>.ConfigureOrder(Query, OrderDictionary);
+
+            Dictionary<string, string> OrderDictionary = new Dictionary<string, string>();
+            Query = QueryHelper<GarmentExternalPurchaseOrder>.ConfigureOrder(Query, OrderDictionary);
+
+            Pageable<GarmentExternalPurchaseOrder> pageable = new Pageable<GarmentExternalPurchaseOrder>(Query, Page - 1, Size);
+            List<GarmentExternalPurchaseOrder> Data = pageable.Data.ToList<GarmentExternalPurchaseOrder>();
+            int TotalData = pageable.TotalCount;
+
+            return Tuple.Create(Data, TotalData, OrderDictionary);
+        }
+
+        public List<GarmentExternalPurchaseOrderItem> ReadItemByPOSerialNumberLoader(string Keyword = null, string Filter = "{}", int size = 50)
+        {
+            // IQueryable<GarmentExternalPurchaseOrder> Query = this.dbSet.IgnoreQueryFilters().Where(m => m.IsPosted == true && m.IsClosed == false && m.IsCanceled == false);
+            Dictionary<string, string> FilterDictionary = JsonConvert.DeserializeObject<Dictionary<string, string>>(Filter);
+            bool hasACCFilter = FilterDictionary.ContainsKey("PO_SerialNumber");
+            string POSerialNumber = hasACCFilter ? (FilterDictionary["PO_SerialNumber"] ?? "").Trim() : "";
+            IQueryable<GarmentExternalPurchaseOrderItem> QueryItem = dbContext.GarmentExternalPurchaseOrderItems.IgnoreQueryFilters().Where(i => (i.IsDeleted == true && i.DeletedAgent == "LUCIA") || (i.IsDeleted == false));
+            List<string> searchAttributes = new List<string>()
+            {
+                "PO_SerialNumber"
+            };
+
+            QueryItem = QueryHelper<GarmentExternalPurchaseOrderItem>.ConfigureSearch(QueryItem, searchAttributes, Keyword);
+            if (hasACCFilter)
+            {
+                QueryItem = QueryItem.Where(a => a.PO_SerialNumber.Contains(POSerialNumber));
+            }
+
+            QueryItem = (from i in QueryItem
+                         where i.PO_SerialNumber.Contains(Keyword)
+                         select new GarmentExternalPurchaseOrderItem
+                         {
+                             Id = i.Id,
+                             PO_SerialNumber = i.PO_SerialNumber,
+                             ProductCode = i.ProductCode,
+                             ProductId = i.ProductId,
+                             ProductName = i.ProductName,
+                             Remark = i.Remark
+                         });
+
+            List<GarmentExternalPurchaseOrderItem> ListData = new List<GarmentExternalPurchaseOrderItem>(QueryItem.OrderBy(o => o.PO_SerialNumber).Take(size));
+            return ListData;
+        }
+
+        public List<GarmentExternalPurchaseOrderItem> ReadItemByROLoader(string Keyword = null, string Filter = "{}", int size = 50)
+        {
+            IQueryable<GarmentExternalPurchaseOrderItem> QueryItem = dbContext.GarmentExternalPurchaseOrderItems.IgnoreQueryFilters().Where(i => (i.IsDeleted == true && i.DeletedAgent == "LUCIA") || (i.IsDeleted == false));
+            List<string> searchAttributes = new List<string>()
+            {
+                "RONo"
+            };
+
+            QueryItem = QueryHelper<GarmentExternalPurchaseOrderItem>.ConfigureSearch(QueryItem, searchAttributes, Keyword);
+            
+            QueryItem = (from i in QueryItem
+                         where i.RONo.Contains(Keyword)
+                         select new GarmentExternalPurchaseOrderItem
+                         {
+                             Id = i.Id,
+                             RONo= i.RONo
+                         });
+
+            List<GarmentExternalPurchaseOrderItem> ListData = new List<GarmentExternalPurchaseOrderItem>(QueryItem.OrderBy(o => o.RONo).Take(size));
+            return ListData;
+        }
+        public List<GarmentExternalPurchaseOrderItem> ReadItemForUnitDOByRO(string Keyword = null, string Filter = "{}")
+        {
+            //var Query = this.dbSet.Where(entity => entity.IsPosted && !entity.IsClosed && !entity.IsCanceled).Select(entity => new { entity.Id});
+
+            Dictionary<string, string> FilterDictionary = JsonConvert.DeserializeObject<Dictionary<string, string>>(Filter);
+
+            string RONo = (FilterDictionary["RONo"] ?? "").Trim();
+            //IQueryable<GarmentExternalPurchaseOrderItem> QueryItem = dbContext.GarmentExternalPurchaseOrderItems.Where(entity=>entity.RONo==RONo ); //CreatedUtc > DateTime(2018, 12, 31)
+
+            var QueryItem = (from i in dbContext.GarmentExternalPurchaseOrderItems
+                             join b in this.dbSet on i.GarmentEPOId equals b.Id
+                             where i.RONo == RONo
+                             && b.IsPosted && !b.IsClosed && !b.IsCanceled
+                             select new GarmentExternalPurchaseOrderItem
+                             {
+                                 Id = i.Id,
+                                 GarmentEPOId = i.GarmentEPOId,
+                                 RONo = i.RONo,
+                                 Article = i.Article
+                             });
+
+            return QueryItem.ToList();
+        }
     }
 }

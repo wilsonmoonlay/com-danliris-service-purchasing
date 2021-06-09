@@ -1,4 +1,7 @@
 ignore:
   - "Com.DanLiris.Service.Purchasing.Lib/Migrations" 
+  - "Com.DanLiris.Service.Purchasing.Lib/AutoMapperProfiles" 
+  - "Com.DanLiris.Service.Purchasing.Lib/Serializers" 
+  - "Com.DanLiris.Service.Purchasing.Lib/MongoDbContext.cs" 
   - "Com.DanLiris.Service.Purchasing.WebApi/Startup.cs"
   - "Com.DanLiris.Service.Purchasing.WebApi/SchedulerJobs/MasterRegistry.cs"

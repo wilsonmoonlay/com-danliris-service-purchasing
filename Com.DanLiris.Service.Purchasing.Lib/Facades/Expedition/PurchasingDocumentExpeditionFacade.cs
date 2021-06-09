@@ -21,7 +21,18 @@ using Com.DanLiris.Service.Purchasing.Lib.Models.UnitPaymentOrderModel;
 
 namespace Com.DanLiris.Service.Purchasing.Lib.Facades.Expedition
 {
-    public class PurchasingDocumentExpeditionFacade : IReadable, IDeleteable
+    public interface IPurchasingDocumentExpeditionFacade : IReadable, IDeleteable
+    {
+        Task<PurchasingDocumentExpedition> ReadModelById(int id);
+        Task<int> DeleteByUPONo(string unitPaymentOrderNo);
+        Task<int> SendToVerification(object list, string username);
+        Task<int> PurchasingDocumentAcceptance(PurchasingDocumentAcceptanceViewModel data, string username);
+        Task<int> DeletePurchasingDocumentAcceptance(int id);
+        Task<int> UnitPaymentOrderVerification(PurchasingDocumentExpedition data, string username);
+        void UpdateUnitPaymentOrderPosition(List<string> unitPaymentOrders, ExpeditionPosition position, string username);
+    }
+
+    public class PurchasingDocumentExpeditionFacade : IPurchasingDocumentExpeditionFacade
     {
         private readonly PurchasingDbContext dbContext;
         public readonly IServiceProvider serviceProvider;

@@ -1033,5 +1033,27 @@ namespace Com.DanLiris.Service.Purchasing.Test.Controllers.GarmentExternalPurcha
             Assert.Equal((int)HttpStatusCode.OK, GetStatusCode(response));
         }
 
+        [Fact]
+        public void GetByROLoader_Success()
+        {
+            var validateMock = new Mock<IValidateService>();
+            validateMock.Setup(s => s.Validate(It.IsAny<GarmentExternalPurchaseOrderItemViewModel>())).Verifiable();
+
+            var mockFacade = new Mock<IGarmentExternalPurchaseOrderFacade>();
+
+            mockFacade.Setup(x => x.ReadItemByRO(It.IsAny<string>(), It.IsAny<string>()))
+                 .Returns(new List<GarmentExternalPurchaseOrderItem>());
+
+            var mockMapper = new Mock<IMapper>();
+            mockMapper.Setup(x => x.Map<List<GarmentExternalPurchaseOrderItemViewModel>>(It.IsAny<List<GarmentExternalPurchaseOrderItem>>()))
+                .Returns(new List<GarmentExternalPurchaseOrderItemViewModel> { ViewModel.Items.First() });
+
+            var IPOmockFacade = new Mock<IGarmentInternalPurchaseOrderFacade>();
+
+            GarmentExternalPurchaseOrderController controller = GetController(mockFacade, validateMock, mockMapper, IPOmockFacade);
+            var response = controller.ByROLoader();
+            Assert.Equal((int)HttpStatusCode.OK, GetStatusCode(response));
+        }
+
     }
 }

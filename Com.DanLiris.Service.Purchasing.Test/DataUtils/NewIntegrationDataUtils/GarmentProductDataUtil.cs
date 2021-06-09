@@ -14,6 +14,20 @@ namespace Com.DanLiris.Service.Purchasing.Test.DataUtils.NewIntegrationDataUtils
 
             var data = new GarmentProductViewModel
             {
+                Code = "CodeTest123",
+                Name = "Name123",
+            };
+            return data;
+        }
+
+        public GarmentProductViewModel GetNewDataBP()
+        {
+            long nowTicks = DateTimeOffset.Now.Ticks;
+
+            var data = new GarmentProductViewModel
+            {
+                Code = "CodeTestBP123",
+                Name = "Name123BP",
             };
             return data;
         }
@@ -31,7 +45,7 @@ namespace Com.DanLiris.Service.Purchasing.Test.DataUtils.NewIntegrationDataUtils
 
         public Dictionary<string, object> GetMultipleResultFormatterOk()
         {
-            var data = new List<GarmentProductViewModel> { GetNewData() };
+            var data = new List<GarmentProductViewModel> { GetNewData(), GetNewDataBP() };
 
             Dictionary<string, object> result =
                 new ResultFormatter("1.0", General.OK_STATUS_CODE, General.OK_MESSAGE)

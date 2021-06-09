@@ -31,7 +31,7 @@ namespace Com.DanLiris.Service.Purchasing.WebApi.Controllers.v1.Report
             try
             {
                 //var data = await localPurchasingBookReportFacade.GetReport(no, unit, category, dateFrom, dateTo, isValas);
-                var data = await localPurchasingBookReportFacade.GetReport(no, accountingUnitId, accountingCategoryId, dateFrom, dateTo, isValas, divisionId);
+                var data = await localPurchasingBookReportFacade.GetReportV2(no, accountingUnitId, accountingCategoryId, dateFrom, dateTo, isValas, divisionId);
                 //var data = importPurchasingBookReportService.GetReport();
 
                 return Ok(new
@@ -61,7 +61,7 @@ namespace Com.DanLiris.Service.Purchasing.WebApi.Controllers.v1.Report
             {
                 var clientTimeZoneOffset = int.Parse(Request.Headers["x-timezone-offset"].First());
                 //var data = await localPurchasingBookReportFacade.GetReport(no, unit, category, dateFrom, dateTo, isValas);
-                var data = await localPurchasingBookReportFacade.GetReport(no, accountingUnitId, accountingCategoryId, dateFrom, dateTo, isValas, divisionId);
+                var data = await localPurchasingBookReportFacade.GetReportV2(no, accountingUnitId, accountingCategoryId, dateFrom, dateTo, isValas, divisionId);
 
                 var stream = isValas ? LocalPurchasingForeignCurrencyBookReportPdfTemplate.Generate(data, clientTimeZoneOffset, dateFrom, dateTo) : LocalPurchasingBookReportPdfTemplate.Generate(data, clientTimeZoneOffset, dateFrom, dateTo);
 

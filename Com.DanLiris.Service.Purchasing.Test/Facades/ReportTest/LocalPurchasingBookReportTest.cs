@@ -21,6 +21,7 @@ using Com.DanLiris.Service.Purchasing.Test.DataUtils.UnitReceiptNoteDataUtils;
 using Com.DanLiris.Service.Purchasing.Test.Helpers;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
+using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
@@ -67,6 +68,12 @@ namespace Com.DanLiris.Service.Purchasing.Test.Facades.ReportTest
         private UnitPaymentOrderDataUtil _dataUtil(UnitPaymentOrderFacade facade, PurchasingDbContext dbContext, string testname)
         {
             var serviceProvider = new Mock<IServiceProvider>();
+            var distributionCache = new Mock<IDistributedCache>();
+            //var emptyArray = new Mock<string>();
+
+            //distributionCache
+            //    .Setup(x => x.GetString(It.IsAny<string>()))
+            //    .Returns(string.Empty);
             serviceProvider
                 .Setup(x => x.GetService(typeof(IdentityService)))
                 .Returns(new IdentityService() { Token = "Token", Username = "Test" });
@@ -78,6 +85,10 @@ namespace Com.DanLiris.Service.Purchasing.Test.Facades.ReportTest
             serviceProvider
                 .Setup(x => x.GetService(typeof(InternalPurchaseOrderFacade)))
                 .Returns(new InternalPurchaseOrderFacade(serviceProvider.Object, _dbContext(testname)));
+
+            serviceProvider
+                .Setup(x => x.GetService(typeof(IDistributedCache)))
+                .Returns(distributionCache.Object);
 
             var services = new ServiceCollection();
             services.AddMemoryCache();
@@ -130,16 +141,52 @@ namespace Com.DanLiris.Service.Purchasing.Test.Facades.ReportTest
 
             var mockCurrencyProvider = new Mock<ICurrencyProvider>();
 
+            var mockIDistributeCache = new Mock<IDistributedCache>();
+
+            //var mockIdentityService = new Mock<IdentityService>();
+
             serviceProvider
                 .Setup(x => x.GetService(typeof(IHttpClientService)))
                 .Returns(new HttpClientTestService());
+
+            serviceProvider
+                .Setup(x => x.GetService(typeof(IdentityService)))
+                .Returns(new IdentityService { TimezoneOffset = 7, Token="test",Username="UnitTest"});
+
             mockCurrencyProvider
                 .Setup(x => x.GetCurrencyByCurrencyCodeDateList(It.IsAny<IEnumerable<Tuple<string, DateTimeOffset>>>()))
-                .ReturnsAsync(new List<Currency>());
+                .ReturnsAsync(new List<Currency> { new Currency { UId = "1", Code = "Currency", Date=DateTime.Now,Rate=1} });
+
+            mockCurrencyProvider
+                .Setup(x => x.GetUnitsIdsByAccountingUnitId(It.IsAny<int>()))
+                .ReturnsAsync(new List<string>());
+
+            mockCurrencyProvider
+                .Setup(x => x.GetCategoryIdsByAccountingCategoryId(It.IsAny<int>()))
+                .ReturnsAsync(new List<string>());
+
+            mockCurrencyProvider
+                .Setup(x => x.GetUnitsByUnitIds(It.IsAny<List<int>>()))
+                .ReturnsAsync(new List<Unit> { new Unit { Id = 1,AccountingUnitId=1} });
+
+            mockCurrencyProvider
+                .Setup(x => x.GetAccountingUnitsByUnitIds(It.IsAny<List<int>>()))
+                .ReturnsAsync(new List<AccountingUnit> { new AccountingUnit { Id = 1, Name ="AccountingUnit",Code ="AccoutingUnit"} });
+
+            mockCurrencyProvider
+                .Setup(x => x.GetCategoriesByCategoryIds(It.IsAny<List<int>>()))
+                .ReturnsAsync(new List<Category> { new Category { Id = 1,AccountingCategoryId=1 } });
+
+            mockCurrencyProvider
+                .Setup(x => x.GetAccountingCategoriesByCategoryIds(It.IsAny<List<int>>()))
+                .ReturnsAsync(new List<AccountingCategory> { new AccountingCategory { Id=1,Code="AccoutingCategory",AccountingLayoutIndex=1,Name="AccoutingCategory"} });
+
             serviceProvider
                 .Setup(x => x.GetService(typeof(ICurrencyProvider)))
                 .Returns(mockCurrencyProvider.Object);
-
+            serviceProvider
+                .Setup(x => x.GetService(typeof(IDistributedCache)))
+                .Returns(mockIDistributeCache.Object);
             serviceProvider
                 .Setup(x => x.GetService(typeof(InternalPurchaseOrderFacade)))
                 .Returns(new InternalPurchaseOrderFacade(serviceProvider.Object, _dbContext(testname)));
@@ -148,7 +195,7 @@ namespace Com.DanLiris.Service.Purchasing.Test.Facades.ReportTest
         }
 
         [Fact]
-        public async Task Should_Success_Get_Data()
+        public async Task Should_Success_GetReport_FalseIsValas()
         {
             var dbContext = _dbContext(GetCurrentMethod());
             var serviceProvider = _getServiceProvider(GetCurrentMethod()).Object;
@@ -163,21 +210,21 @@ namespace Com.DanLiris.Service.Purchasing.Test.Facades.ReportTest
 
             var facade = new LocalPurchasingBookReportFacade(serviceProvider, dbContext);
 
-            var result = await facade.GetReport(urn.URNNo, Convert.ToInt32(urn.UnitId), Convert.ToInt32(pr.CategoryId), DateTime.Now.AddDays(-7), DateTime.Now.AddDays(7), true, It.IsAny<int>());
+            var result = await facade.GetReportDataV2(urn.URNNo, Convert.ToInt32(urn.UnitId), Convert.ToInt32(pr.CategoryId), DateTime.Now.AddDays(-7), DateTime.Now.AddDays(7), false, It.IsAny<int>());
             Assert.NotNull(result);
 
-            result = await facade.GetReport(urn.URNNo, Convert.ToInt32(urn.UnitId), Convert.ToInt32(pr.CategoryId), DateTime.Now.AddDays(-7), DateTime.Now.AddDays(7), true, It.IsAny<int>());
-            Assert.NotNull(result);
+            //result = await facade.GetReport(urn.URNNo, Convert.ToInt32(urn.UnitId), Convert.ToInt32(pr.CategoryId), DateTime.Now.AddDays(-7), DateTime.Now.AddDays(7), true, It.IsAny<int>());
+            //Assert.NotNull(result);
         }
 
         [Fact]
-        public async Task Should_Success_Get_Data_Empty()
+        public async Task Should_Success_GetReport_TrueIsValas()
         {
             var dbContext = _dbContext(GetCurrentMethod());
             var serviceProvider = _getServiceProvider(GetCurrentMethod()).Object;
 
             var unitPaymentOrderFacade = new UnitPaymentOrderFacade(serviceProvider, dbContext);
-            var dataUtil = await _dataUtil(unitPaymentOrderFacade, dbContext, GetCurrentMethod()).GetTestLocalData();
+            var dataUtil = await _dataUtil(unitPaymentOrderFacade, dbContext, GetCurrentMethod()).GetTestImportDataValas();
 
             var urnId = dataUtil.Items.FirstOrDefault().URNId;
             var urn = dbContext.UnitReceiptNotes.FirstOrDefault(f => f.Id.Equals(urnId));
@@ -186,12 +233,15 @@ namespace Com.DanLiris.Service.Purchasing.Test.Facades.ReportTest
 
             var facade = new LocalPurchasingBookReportFacade(serviceProvider, dbContext);
 
-            var result = await facade.GetReport("Invalid URNNo", Convert.ToInt32(urn.UnitId), Convert.ToInt32(pr.CategoryId), DateTime.Now.AddDays(-7), DateTime.Now.AddDays(7), false, It.IsAny<int>());
-            Assert.Empty(result.Reports);
+            var result = await facade.GetReportDataV2(urn.URNNo, Convert.ToInt32(urn.UnitId), Convert.ToInt32(pr.CategoryId), DateTime.Now.AddDays(-7), DateTime.Now.AddDays(7), true, It.IsAny<int>());
+            Assert.NotNull(result);
+
+            //result = await facade.GetReport(urn.URNNo, Convert.ToInt32(urn.UnitId), Convert.ToInt32(pr.CategoryId), DateTime.Now.AddDays(-7), DateTime.Now.AddDays(7), true, It.IsAny<int>());
+            //Assert.NotNull(result);
         }
 
         [Fact]
-        public async Task Should_Success_GenerateExcel_Data()
+        public async Task Should_Success_GetReport_XLS()
         {
             var dbContext = _dbContext(GetCurrentMethod());
             var serviceProvider = _getServiceProvider(GetCurrentMethod()).Object;
@@ -206,11 +256,13 @@ namespace Com.DanLiris.Service.Purchasing.Test.Facades.ReportTest
 
             var facade = new LocalPurchasingBookReportFacade(serviceProvider, dbContext);
 
-            var result = await facade.GenerateExcel(urn.URNNo, Convert.ToInt32(urn.UnitId), Convert.ToInt32(pr.CategoryId), DateTime.Now.AddDays(-7), DateTime.Now.AddDays(7), false, It.IsAny<int>());
-            Assert.NotNull(result);
+            //var result = await facade.GetReportDataV2(urn.URNNo, Convert.ToInt32(urn.UnitId), Convert.ToInt32(pr.CategoryId), DateTime.Now.AddDays(-7), DateTime.Now.AddDays(7), false, It.IsAny<int>());
+            //Assert.NotNull(result);
+            var resultExcel = await facade.GenerateExcel(urn.URNNo, Convert.ToInt32(urn.UnitId), Convert.ToInt32(pr.CategoryId), DateTime.Now.AddDays(-7), DateTime.Now.AddDays(7), false, It.IsAny<int>());
+            Assert.NotNull(resultExcel);
 
-            result = await facade.GenerateExcel(urn.URNNo, Convert.ToInt32(urn.UnitId), Convert.ToInt32(pr.CategoryId), DateTime.Now.AddDays(-7), DateTime.Now.AddDays(7), true, It.IsAny<int>());
-            Assert.NotNull(result);
+            //result = await facade.GetReport(urn.URNNo, Convert.ToInt32(urn.UnitId), Convert.ToInt32(pr.CategoryId), DateTime.Now.AddDays(-7), DateTime.Now.AddDays(7), true, It.IsAny<int>());
+            //Assert.NotNull(result);
         }
 
         [Fact]
@@ -229,7 +281,8 @@ namespace Com.DanLiris.Service.Purchasing.Test.Facades.ReportTest
 
             var facade = new LocalPurchasingBookReportFacade(serviceProvider, dbContext);
 
-            var result = await facade.GetReport(urn.URNNo, Convert.ToInt32(urn.UnitId), Convert.ToInt32(pr.CategoryId), DateTime.Now.AddDays(-7), DateTime.Now.AddDays(7), true, It.IsAny<int>());
+            var result = await facade.GetReportDataV2(urn.URNNo, Convert.ToInt32(urn.UnitId), Convert.ToInt32(pr.CategoryId), DateTime.Now.AddDays(-7), DateTime.Now.AddDays(7), false, It.IsAny<int>());
+            result.Reports[0].DataSourceSort = 1;
 
             var localPdf = LocalPurchasingBookReportPdfTemplate.Generate(result, 1, null, null);
             Assert.NotNull(localPdf);
@@ -240,5 +293,128 @@ namespace Com.DanLiris.Service.Purchasing.Test.Facades.ReportTest
             var importPdf = ImportPurchasingBookReportPdfTemplate.Generate(result, 1, DateTime.Now.AddDays(-7), DateTime.Now.AddDays(7));
             Assert.NotNull(importPdf);
         }
+
+        [Fact]
+        public async Task Should_Success_Generate_Pdf_LocalValasCorrection()
+        {
+            var dbContext = _dbContext(GetCurrentMethod());
+            var serviceProvider = _getServiceProvider(GetCurrentMethod()).Object;
+
+            var unitPaymentOrderFacade = new UnitPaymentOrderFacade(serviceProvider, dbContext);
+            var dataUtil = await _dataUtil(unitPaymentOrderFacade, dbContext, GetCurrentMethod()).GetTestLocalData();
+
+            var urnId = dataUtil.Items.FirstOrDefault().URNId;
+            var urn = dbContext.UnitReceiptNotes.FirstOrDefault(f => f.Id.Equals(urnId));
+            var prId = urn.Items.FirstOrDefault(f => f.URNId.Equals(urn.Id)).PRId;
+            var pr = dbContext.PurchaseRequests.FirstOrDefault(f => f.Id.Equals(prId));
+
+            var facade = new LocalPurchasingBookReportFacade(serviceProvider, dbContext);
+
+            var result = await facade.GetReportDataV2(urn.URNNo, Convert.ToInt32(urn.UnitId), Convert.ToInt32(pr.CategoryId), DateTime.Now.AddDays(-7), DateTime.Now.AddDays(7), false, It.IsAny<int>());
+            result.Reports[0].DataSourceSort = 2;
+
+            var localPdf = LocalPurchasingBookReportPdfTemplate.Generate(result, 1, null, null);
+            Assert.NotNull(localPdf);
+
+            var localCurrencyPdf = LocalPurchasingForeignCurrencyBookReportPdfTemplate.Generate(result, 1, DateTime.Now.AddDays(-7), DateTime.Now.AddDays(7));
+            Assert.NotNull(localCurrencyPdf);
+
+            var importPdf = ImportPurchasingBookReportPdfTemplate.Generate(result, 1, DateTime.Now.AddDays(-7), DateTime.Now.AddDays(7));
+            Assert.NotNull(importPdf);
+        }
+
+        [Fact]
+        public async Task Should_Success_Get_Data()
+        {
+            var dbContext = _dbContext(GetCurrentMethod());
+            var serviceProvider = _getServiceProvider(GetCurrentMethod()).Object;
+
+            var unitPaymentOrderFacade = new UnitPaymentOrderFacade(serviceProvider, dbContext);
+            var dataUtil = await _dataUtil(unitPaymentOrderFacade, dbContext, GetCurrentMethod()).GetTestLocalData();
+
+            var urnId = dataUtil.Items.FirstOrDefault().URNId;
+            var urn = dbContext.UnitReceiptNotes.FirstOrDefault(f => f.Id.Equals(urnId));
+            var prId = urn.Items.FirstOrDefault(f => f.URNId.Equals(urn.Id)).PRId;
+            var pr = dbContext.PurchaseRequests.FirstOrDefault(f => f.Id.Equals(prId));
+
+            var facade = new LocalPurchasingBookReportFacade(serviceProvider, dbContext);
+
+            var result = await facade.GetReportV2(urn.URNNo, Convert.ToInt32(urn.UnitId), Convert.ToInt32(pr.CategoryId), DateTime.Now.AddDays(-7), DateTime.Now.AddDays(7), true, It.IsAny<int>());
+            Assert.NotNull(result);
+
+            result = await facade.GetReportV2(urn.URNNo, Convert.ToInt32(urn.UnitId), Convert.ToInt32(pr.CategoryId), DateTime.Now.AddDays(-7), DateTime.Now.AddDays(7), true, It.IsAny<int>());
+            Assert.NotNull(result);
+        }
+
+        //[Fact]
+        //public async Task Should_Success_Get_Data_Empty()
+        //{
+        //    var dbContext = _dbContext(GetCurrentMethod());
+        //    var serviceProvider = _getServiceProvider(GetCurrentMethod()).Object;
+
+        //    var unitPaymentOrderFacade = new UnitPaymentOrderFacade(serviceProvider, dbContext);
+        //    var dataUtil = await _dataUtil(unitPaymentOrderFacade, dbContext, GetCurrentMethod()).GetTestLocalData();
+
+        //    var urnId = dataUtil.Items.FirstOrDefault().URNId;
+        //    var urn = dbContext.UnitReceiptNotes.FirstOrDefault(f => f.Id.Equals(urnId));
+        //    var prId = urn.Items.FirstOrDefault(f => f.URNId.Equals(urn.Id)).PRId;
+        //    var pr = dbContext.PurchaseRequests.FirstOrDefault(f => f.Id.Equals(prId));
+
+        //    var facade = new LocalPurchasingBookReportFacade(serviceProvider, dbContext);
+
+        //    var result = await facade.GetReport("Invalid URNNo", Convert.ToInt32(urn.UnitId), Convert.ToInt32(pr.CategoryId), DateTime.Now.AddDays(-7), DateTime.Now.AddDays(7), false, It.IsAny<int>());
+        //    Assert.Empty(result.Reports);
+        //}
+
+        //[Fact]
+        //public async Task Should_Success_GenerateExcel_Data()
+        //{
+        //    var dbContext = _dbContext(GetCurrentMethod());
+        //    var serviceProvider = _getServiceProvider(GetCurrentMethod()).Object;
+
+        //    var unitPaymentOrderFacade = new UnitPaymentOrderFacade(serviceProvider, dbContext);
+        //    var dataUtil = await _dataUtil(unitPaymentOrderFacade, dbContext, GetCurrentMethod()).GetTestLocalData();
+
+        //    var urnId = dataUtil.Items.FirstOrDefault().URNId;
+        //    var urn = dbContext.UnitReceiptNotes.FirstOrDefault(f => f.Id.Equals(urnId));
+        //    var prId = urn.Items.FirstOrDefault(f => f.URNId.Equals(urn.Id)).PRId;
+        //    var pr = dbContext.PurchaseRequests.FirstOrDefault(f => f.Id.Equals(prId));
+
+        //    var facade = new LocalPurchasingBookReportFacade(serviceProvider, dbContext);
+
+        //    var result = await facade.GenerateExcel(urn.URNNo, Convert.ToInt32(urn.UnitId), Convert.ToInt32(pr.CategoryId), DateTime.Now.AddDays(-7), DateTime.Now.AddDays(7), false, It.IsAny<int>());
+        //    Assert.NotNull(result);
+
+        //    result = await facade.GenerateExcel(urn.URNNo, Convert.ToInt32(urn.UnitId), Convert.ToInt32(pr.CategoryId), DateTime.Now.AddDays(-7), DateTime.Now.AddDays(7), true, It.IsAny<int>());
+        //    Assert.NotNull(result);
+        //}
+
+        //[Fact]
+        //public async Task Should_Success_Generate_Pdf()
+        //{
+        //    var dbContext = _dbContext(GetCurrentMethod());
+        //    var serviceProvider = _getServiceProvider(GetCurrentMethod()).Object;
+
+        //    var unitPaymentOrderFacade = new UnitPaymentOrderFacade(serviceProvider, dbContext);
+        //    var dataUtil = await _dataUtil(unitPaymentOrderFacade, dbContext, GetCurrentMethod()).GetTestLocalData();
+
+        //    var urnId = dataUtil.Items.FirstOrDefault().URNId;
+        //    var urn = dbContext.UnitReceiptNotes.FirstOrDefault(f => f.Id.Equals(urnId));
+        //    var prId = urn.Items.FirstOrDefault(f => f.URNId.Equals(urn.Id)).PRId;
+        //    var pr = dbContext.PurchaseRequests.FirstOrDefault(f => f.Id.Equals(prId));
+
+        //    var facade = new LocalPurchasingBookReportFacade(serviceProvider, dbContext);
+
+        //    var result = await facade.GetReport(urn.URNNo, Convert.ToInt32(urn.UnitId), Convert.ToInt32(pr.CategoryId), DateTime.Now.AddDays(-7), DateTime.Now.AddDays(7), true, It.IsAny<int>());
+
+        //    var localPdf = LocalPurchasingBookReportPdfTemplate.Generate(result, 1, null, null);
+        //    Assert.NotNull(localPdf);
+
+        //    var localCurrencyPdf = LocalPurchasingForeignCurrencyBookReportPdfTemplate.Generate(result, 1, DateTime.Now.AddDays(-7), DateTime.Now.AddDays(7));
+        //    Assert.NotNull(localCurrencyPdf);
+
+        //    var importPdf = ImportPurchasingBookReportPdfTemplate.Generate(result, 1, DateTime.Now.AddDays(-7), DateTime.Now.AddDays(7));
+        //    Assert.NotNull(importPdf);
+        //}
     }
 }

@@ -310,8 +310,16 @@ namespace Com.DanLiris.Service.Purchasing.Lib.PDFTemplates
                     cell.Phrase = new Phrase(data.VATNo, _smallerFont);
                     table.AddCell(cell);
 
-                    cell.Phrase = new Phrase(data.UPONo, _smallerFont);
+                    if (data.DataSourceSort == 1)
+                    {
+                        cell.Phrase = new Phrase(data.UPONo, _smallerFont);
+                    }else
+                    {
+                        cell.Phrase = new Phrase(data.CorrectionNo, _smallerFont);
+
+                    }
                     table.AddCell(cell);
+
 
                     cell.Phrase = new Phrase(data.AccountingCategoryName, _smallerFont);
                     table.AddCell(cell);

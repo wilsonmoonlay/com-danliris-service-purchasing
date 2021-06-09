@@ -42,10 +42,10 @@ namespace Com.DanLiris.Service.Purchasing.Lib.ViewModels.UnitPaymentCorrectionNo
             {
                 yield return new ValidationResult("No. Surat Perintah Bayar is required", new List<string> { "uPOId" });
             }
-            if (this.correctionDate.Equals(DateTimeOffset.MinValue) || this.correctionDate == null)
-            {
-                yield return new ValidationResult("Date is required", new List<string> { "correctionDate" });
-            }
+            //if (this.correctionDate.Equals(DateTimeOffset.MinValue) || this.correctionDate == null)
+            //{
+            //    yield return new ValidationResult("Date is required", new List<string> { "correctionDate" });
+            //}
             if ((correctionType==null || correctionType=="Jumlah") && this.releaseOrderNoteNo == null)
             {
                 yield return new ValidationResult("No. Bon Keluar is required", new List<string> { "releaseOrderNoteNo" });
